@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- Fuel v2 · 2026.10.05-a · custom theme color picker (darker teal or anything) -->
+<!-- Fuel v2 · 2026.10.05-b · intake panel = v1 dark teal 1:1 (white ring/text, mint fatigue) -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#edf0f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,14 +15,14 @@
     --sheet:#ffffff;
     --text:#191d23;
     --text-dim:#5b6470;
-    --accent:#2f7cf6;
-    /* intake panel theme (overridden per theme) */
-    --intake-bg1:#ddf0f4;
-    --intake-bg2:#c6e4ea;
+    --accent:#17a2c4;
+    /* intake panel theme (overridden per theme) — v1 dark teal */
+    --intake-bg1:#1392ac;
+    --intake-bg2:#0b5b74;
     --teal:#0d7f9e;
-    --ink:#12333c;
-    --ink-dim:#4a6b75;
-    --ink-faint:#6b8b95;
+    --ink:#ffffff;
+    --ink-dim:rgba(255,255,255,.74);
+    --ink-faint:rgba(255,255,255,.52);
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
@@ -117,16 +117,16 @@
   .intake-card{
     position:relative;
     overflow:hidden;
-    border-radius:28px;
+    border-radius:36px;
     padding:24px 16px 26px;
     background:linear-gradient(165deg,var(--intake-bg1) 0%,var(--intake-bg2) 100%);
     color:var(--ink);
     margin-bottom:10px;
-    box-shadow:0 8px 22px rgba(13,127,158,.14);
+    box-shadow:0 10px 26px rgba(3,32,43,.38);
   }
   .intake-blob{
     position:absolute;top:-78px;right:-78px;width:230px;height:230px;border-radius:50%;
-    background:rgba(255,255,255,.30);
+    background:rgba(255,255,255,.10);
     pointer-events:none;
   }
   .intake-head{
@@ -150,7 +150,7 @@
     font-size:21px;font-weight:700;color:var(--ink-dim);
   }
   .wk-day.today .dow{color:var(--ink)}
-  .wk-day.today .dnum{background:#fff;color:var(--teal);box-shadow:0 3px 10px color-mix(in srgb, var(--teal) 30%, transparent)}
+  .wk-day.today .dnum{background:#fff;color:color-mix(in srgb, var(--accent) 72%, black);box-shadow:0 3px 10px color-mix(in srgb, var(--accent) 38%, transparent)}
   .wk-day .dot{width:5px;height:5px;border-radius:50%;margin-top:1px}
   .rings-row{
     position:relative;
@@ -160,7 +160,8 @@
   .mini-col{display:flex;flex-direction:column;gap:16px}
   .mini-ring{position:relative;width:58px;height:58px}
   .mini-ring svg{width:58px;height:58px;transform:rotate(-90deg);display:block}
-  .ring-prog{stroke:var(--teal)}
+  .ring-prog{stroke:#fff}
+  .ring-fatigue{stroke:#2dd4a8}
   .mini-center{
     position:absolute;inset:0;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
@@ -179,17 +180,17 @@
   .big-center .bs2{font-size:17px;font-weight:700;color:var(--ink-dim);white-space:nowrap}
   .goal-line{position:relative;font-size:23px;font-weight:700;margin-bottom:12px}
   .goal-row{position:relative;display:flex;align-items:center;gap:12px;margin-bottom:22px}
-  .goal-bar{position:relative;flex:1;height:17px;border-radius:999px;background:rgba(255,255,255,.60)}
+  .goal-bar{position:relative;flex:1;height:17px;border-radius:999px;background:rgba(255,255,255,.22)}
   .goal-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#ff5a3c,#ff9a3c)}
   .goal-tick{
     position:absolute;top:-3px;bottom:-3px;left:100%;width:3px;border-radius:2px;
-    background:var(--ink);transform:translateX(-50%);
+    background:#0a2e3d;transform:translateX(-50%);
   }
   .goal-info{
     flex:none;width:36px;height:36px;border-radius:50%;
-    background:rgba(255,255,255,.55);
+    background:rgba(255,255,255,.16);
     display:flex;align-items:center;justify-content:center;
-    font-size:17px;font-weight:700;color:var(--ink-dim);
+    font-size:17px;font-weight:700;color:#fff;
   }
   .nutrition-link{
     position:relative;text-align:center;
@@ -260,7 +261,7 @@
   .sw-preview{height:76px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
   .sw-ring{
     width:42px;height:42px;border-radius:50%;
-    border:8px solid var(--sw-ring);border-top-color:rgba(255,255,255,.55);
+    border:8px solid #fff;border-top-color:rgba(255,255,255,.35);
     transform:rotate(-45deg);
   }
   .sw-foot{display:flex;align-items:center;justify-content:space-between}
@@ -324,7 +325,7 @@
                 <div class="mini-ring">
                   <svg viewBox="0 0 84 84">
                     <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="9"/>
-                    <circle class="ring-prog" cx="42" cy="42" r="34" fill="none" stroke="#0d7f9e" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+                    <circle class="ring-prog ring-fatigue" cx="42" cy="42" r="34" fill="none" stroke="#2dd4a8" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
                   </svg>
                   <div class="mini-center"><span class="mv">–</span><span class="ml">FATIGUE</span></div>
                 </div>
@@ -444,12 +445,12 @@
 
     /* ---------- themes ---------- */
     var THEMES = {
-      teal:  {name:'Teal',  bg1:'#ddf0f4', bg2:'#c6e4ea', ring:'#0d7f9e', ink:'#12333c', inkDim:'#4a6b75', inkFaint:'#6b8b95', accent:'#0d7f9e'},
-      blue:  {name:'Blue',  bg1:'#dbe9fb', bg2:'#c7dbf6', ring:'#2f7cf6', ink:'#16283c', inkDim:'#46586e', inkFaint:'#6d7f95', accent:'#2f7cf6'},
-      green: {name:'Green', bg1:'#ddf2e4', bg2:'#c7e8d2', ring:'#1f9d55', ink:'#143322', inkDim:'#3f5c4a', inkFaint:'#6b8a74', accent:'#1f9d55'},
-      purple:{name:'Purple',bg1:'#e9e2f8', bg2:'#d7cbf1', ring:'#7c5cd6', ink:'#2a2140', inkDim:'#544a6e', inkFaint:'#7d7395', accent:'#7c5cd6'},
-      orange:{name:'Orange',bg1:'#fdeadd', bg2:'#f8dbc6', ring:'#dd7a28', ink:'#3c2413', inkDim:'#6b4f38', inkFaint:'#8f7358', accent:'#dd7a28'},
-      rose:  {name:'Rose',  bg1:'#fbe3ec', bg2:'#f5cddf', ring:'#d64f7e', ink:'#3c1a28', inkDim:'#6b4453', inkFaint:'#8f6d79', accent:'#d64f7e'}
+      teal:  {name:'Teal',  bg1:'#1392ac', bg2:'#0b5b74', ink:'#ffffff', inkDim:'rgba(255,255,255,.74)', inkFaint:'rgba(255,255,255,.52)', accent:'#17a2c4'},
+      blue:  {name:'Blue',  bg1:'#2f74d8', bg2:'#1b4c96', ink:'#ffffff', inkDim:'rgba(255,255,255,.74)', inkFaint:'rgba(255,255,255,.52)', accent:'#5aa0ff'},
+      green: {name:'Green', bg1:'#26a862', bg2:'#146636', ink:'#ffffff', inkDim:'rgba(255,255,255,.74)', inkFaint:'rgba(255,255,255,.52)', accent:'#3cc474'},
+      purple:{name:'Purple',bg1:'#7d63d4', bg2:'#4f3898', ink:'#ffffff', inkDim:'rgba(255,255,255,.74)', inkFaint:'rgba(255,255,255,.52)', accent:'#9a80e6'},
+      orange:{name:'Orange',bg1:'#e58e36', bg2:'#9e5c1d', ink:'#ffffff', inkDim:'rgba(255,255,255,.76)', inkFaint:'rgba(255,255,255,.54)', accent:'#f2a45a'},
+      rose:  {name:'Rose',  bg1:'#d8648e', bg2:'#943652', ink:'#ffffff', inkDim:'rgba(255,255,255,.74)', inkFaint:'rgba(255,255,255,.52)', accent:'#e885a8'}
     };
     function hx(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
     function mix(h1,h2,amt){
@@ -461,7 +462,6 @@
     }
     function setVars(t){
       var r = document.documentElement.style;
-      r.setProperty('--teal', t.ring);
       r.setProperty('--ink', t.ink);
       r.setProperty('--ink-dim', t.inkDim);
       r.setProperty('--ink-faint', t.inkFaint);
@@ -484,15 +484,15 @@
     }
     function buildCustom(hex){
       return {name:'Custom',
-        bg1:mix(hex,'#ffffff',.84), bg2:mix(hex,'#ffffff',.70),
-        ring:hex, accent:hex,
-        ink:mix(hex,'#000000',.70), inkDim:mix(hex,'#000000',.42), inkFaint:mix(hex,'#000000',.25)};
+        bg1:mix(hex,'#000000',.15), bg2:mix(hex,'#000000',.40),
+        ink:'#ffffff', inkDim:'rgba(255,255,255,.74)', inkFaint:'rgba(255,255,255,.52)',
+        accent:mix(hex,'#ffffff',.30)};
     }
     function paintCustom(hex){
       hex = (hex || '#0a5f77').toLowerCase();
       var t = buildCustom(hex);
       var cb = document.querySelector('.swatch.custom');
-      if (cb) cb.style.setProperty('--sw-ring', hex);
+      if (cb) cb.style.setProperty('--sw-ring', mix(hex,'#ffffff',.30));
       var prev = document.getElementById('customPreview');
       if (prev) prev.style.background = 'linear-gradient(135deg,' + t.bg1 + ',' + t.bg2 + ')';
       var hexEl = document.getElementById('customHex');
@@ -514,7 +514,7 @@
       var b = document.createElement('button');
       b.className = 'swatch';
       b.setAttribute('data-theme', id);
-      b.style.setProperty('--sw-ring', t.ring);
+      b.style.setProperty('--sw-ring', t.accent);
       b.innerHTML =
         '<span class="sw-preview" style="background:linear-gradient(135deg,' + t.bg1 + ',' + t.bg2 + ')">' +
           '<span class="sw-ring"></span></span>' +
