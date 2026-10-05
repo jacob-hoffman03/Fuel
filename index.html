@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- Fuel v2 · 2026.10.04-h · light mode · Today's Intake calorie panel (rings fit fix) · sticky frosted header · left pill shell · app-shell scroll -->
+<!-- Fuel v2 · 2026.10.04-i · Profile page + Theme colors (calorie panel + profile circle) + pfp picker -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#edf0f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,13 +13,13 @@
   :root{
     --bg:#edf0f5;
     --sheet:#ffffff;
-    --card:#edf0f5;
     --text:#191d23;
     --text-dim:#5b6470;
     --accent:#2f7cf6;
-    --pill:#ffffff;
+    /* intake panel theme (overridden per theme) */
+    --intake-bg1:#ddf0f4;
+    --intake-bg2:#c6e4ea;
     --teal:#0d7f9e;
-    --teal-deep:#0a5f77;
     --ink:#12333c;
     --ink-dim:#4a6b75;
     --ink-faint:#6b8b95;
@@ -34,12 +34,16 @@
     color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
   }
+  .hidden{display:none!important}
   .app{
     height:100dvh;
     max-width:480px;
     margin:0 auto;
     position:relative;
   }
+  .view{position:absolute;inset:0;display:none;overflow:hidden}
+  .view.active{display:block;animation:viewIn .22s ease}
+  @keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   .scroller{
     height:100%;
     overflow-y:auto;
@@ -47,6 +51,7 @@
     overscroll-behavior-y:contain;
     background:var(--bg);
   }
+  /* ---------- home header ---------- */
   header.fuel-header{
     position:sticky;
     top:0;
@@ -92,13 +97,16 @@
     min-width:44px;
   }
   .avatar{
+    position:relative;
     width:44px;height:44px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
     background:#dde3ea;
     border:2.5px solid var(--accent);
-    box-shadow:0 0 0 3px rgba(47,124,246,.18);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    cursor:pointer;overflow:hidden;
   }
   .avatar svg{width:24px;height:24px;stroke:#5b6470;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   main.sheet{
     background:var(--sheet);
     border-radius:30px 30px 0 0;
@@ -111,9 +119,9 @@
     overflow:hidden;
     border-radius:28px;
     padding:24px 16px 26px;
-    background:linear-gradient(165deg,#ddf0f4 0%,#c6e4ea 100%);
+    background:linear-gradient(165deg,var(--intake-bg1) 0%,var(--intake-bg2) 100%);
     color:var(--ink);
-    margin-bottom:30px;
+    margin-bottom:10px;
     box-shadow:0 8px 22px rgba(13,127,158,.14);
   }
   .intake-blob{
@@ -142,7 +150,7 @@
     font-size:17px;font-weight:700;color:var(--ink-dim);
   }
   .wk-day.today .dow{color:var(--ink)}
-  .wk-day.today .dnum{background:#fff;color:var(--teal);box-shadow:0 3px 10px rgba(13,127,158,.28)}
+  .wk-day.today .dnum{background:#fff;color:var(--teal);box-shadow:0 3px 10px color-mix(in srgb, var(--teal) 30%, transparent)}
   .wk-day .dot{width:5px;height:5px;border-radius:50%;margin-top:1px}
   .rings-row{
     position:relative;
@@ -152,6 +160,7 @@
   .mini-col{display:flex;flex-direction:column;gap:16px}
   .mini-ring{position:relative;width:68px;height:68px}
   .mini-ring svg{width:68px;height:68px;transform:rotate(-90deg);display:block}
+  .ring-prog{stroke:var(--teal)}
   .mini-center{
     position:absolute;inset:0;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
@@ -185,96 +194,241 @@
     position:relative;text-align:center;
     font-size:21px;font-weight:800;letter-spacing:-.3px;cursor:pointer;
   }
+  /* ---------- profile / theme pages ---------- */
+  .page{padding:0 20px calc(env(safe-area-inset-bottom, 0px) + 30px)}
+  .page-bar{
+    position:sticky;top:0;z-index:20;
+    display:flex;align-items:center;justify-content:space-between;
+    margin:0 -20px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 20px 12px;
+    background:color-mix(in srgb, var(--bg) 88%, transparent);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  }
+  .done-btn{background:none;border:0;color:var(--accent);font-size:17px;font-weight:600;cursor:pointer;padding:8px 4px}
+  .back-btn{background:none;border:0;color:var(--accent);font-size:17px;font-weight:600;cursor:pointer;padding:8px 4px}
+  .page-bar .page-title{font-size:17px;font-weight:600}
+  .page-bar .bar-sp{width:64px}
+  .profile-hero{
+    background:#fff;border-radius:28px;padding:24px 22px;
+    display:flex;align-items:center;gap:18px;margin:12px 0 8px;
+    box-shadow:0 4px 14px rgba(20,30,45,.06);
+  }
+  .p-avatar{
+    position:relative;width:76px;height:76px;flex:none;border-radius:50%;
+    border:3px solid var(--accent);
+    box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
+    background:#dde3ea;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;overflow:visible;
+  }
+  .p-avatar .glyph{display:flex;align-items:center;justify-content:center}
+  .p-avatar .glyph svg{width:38px;height:38px;stroke:#5b6470;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .p-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .p-pencil{
+    position:absolute;right:-5px;bottom:-5px;width:30px;height:30px;border-radius:50%;
+    background:#fff;border:1px solid rgba(20,30,45,.10);
+    box-shadow:0 2px 6px rgba(20,30,45,.18);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .p-pencil svg{width:15px;height:15px;stroke:#191d23;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .p-name{font-size:23px;font-weight:700;letter-spacing:-.3px}
+  .p-sub{font-size:14px;color:var(--text-dim);font-weight:500;margin-top:3px}
+  .p-remove{
+    display:block;margin:2px auto 16px;background:none;border:0;
+    color:var(--text-dim);font-size:14px;font-weight:600;cursor:pointer;padding:6px;
+  }
+  .menu-group{display:flex;flex-direction:column;gap:12px}
+  .menu-row{
+    background:#fff;border:0;border-radius:22px;padding:16px;
+    display:flex;align-items:center;gap:14px;width:100%;
+    font-size:17px;font-weight:600;color:var(--text);cursor:pointer;text-align:left;
+    box-shadow:0 4px 14px rgba(20,30,45,.05);
+  }
+  .menu-ic{
+    width:40px;height:40px;border-radius:13px;background:var(--bg);flex:none;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .menu-ic svg{width:22px;height:22px;stroke:#3c4654;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .menu-chev{margin-left:auto;color:#9aa4b2;font-size:22px;font-weight:600;line-height:1}
+  .theme-title{font-size:28px;font-weight:700;letter-spacing:-.4px;margin:12px 0 6px}
+  .theme-hint{font-size:15px;color:var(--text-dim);font-weight:500;margin-bottom:18px}
+  .swatches{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .swatch{
+    border:2.5px solid transparent;background:#fff;border-radius:22px;padding:12px;
+    cursor:pointer;text-align:left;box-shadow:0 4px 14px rgba(20,30,45,.05);
+  }
+  .swatch.sel{border-color:var(--sw-ring)}
+  .sw-preview{height:76px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .sw-ring{
+    width:42px;height:42px;border-radius:50%;
+    border:8px solid var(--sw-ring);border-top-color:rgba(255,255,255,.55);
+    transform:rotate(-45deg);
+  }
+  .sw-foot{display:flex;align-items:center;justify-content:space-between}
+  .sw-name{font-size:15px;font-weight:700}
+  .sw-check{
+    display:none;width:24px;height:24px;border-radius:50%;
+    background:var(--sw-ring);align-items:center;justify-content:center;
+  }
+  .sw-check svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  .swatch.sel .sw-check{display:flex}
 </style>
 </head>
 <body>
   <div class="app">
-    <div class="scroller" id="scroller">
-      <header class="fuel-header">
-        <div class="slot-left">
-          <span class="stat-pill" aria-label="Status">
-            <svg viewBox="0 0 24 24">
-              <rect x="6" y="2.5" width="10.5" height="19" rx="2.5"/>
-              <rect class="badge" x="13.5" y="15.5" width="7" height="4.4" rx="1.2"/>
-              <path d="M21.2 16.9v1.6"/>
-            </svg>
-            <span class="ph">—</span>
-          </span>
-        </div>
-        <div class="slot-date" id="hdrDate"></div>
-        <div class="slot-right">
-          <div class="avatar" aria-label="Profile">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="8" r="3.6"/>
-              <path d="M5 19.5c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/>
-            </svg>
-          </div>
-        </div>
-      </header>
 
-      <main class="sheet">
-        <section class="intake-card" aria-label="Today's intake">
-          <div class="intake-blob"></div>
-          <div class="intake-head">
-            <h3>Today's Intake</h3>
-            <span class="intake-date" id="intakeDate"></span>
+    <!-- ============ HOME ============ -->
+    <section class="view active" id="view-home">
+      <div class="scroller" id="scroller">
+        <header class="fuel-header">
+          <div class="slot-left">
+            <span class="stat-pill" aria-label="Status">
+              <svg viewBox="0 0 24 24">
+                <rect x="6" y="2.5" width="10.5" height="19" rx="2.5"/>
+                <rect class="badge" x="13.5" y="15.5" width="7" height="4.4" rx="1.2"/>
+                <path d="M21.2 16.9v1.6"/>
+              </svg>
+              <span class="ph">—</span>
+            </span>
           </div>
-          <div class="week-strip">
-            <button class="wk-arrow" id="wkPrev" aria-label="Previous week">‹</button>
-            <div class="wk-days" id="wkDays"></div>
-            <button class="wk-arrow" id="wkNext" aria-label="Next week">›</button>
+          <div class="slot-date" id="hdrDate"></div>
+          <div class="slot-right">
+            <div class="avatar" id="hdrAvatar" aria-label="Profile">
+              <span class="glyph">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="8" r="3.6"/>
+                  <path d="M5 19.5c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/>
+                </svg>
+              </span>
+            </div>
           </div>
-          <div class="rings-row">
-            <div class="mini-col">
+        </header>
+
+        <main class="sheet">
+          <section class="intake-card" aria-label="Today's intake">
+            <div class="intake-blob"></div>
+            <div class="intake-head">
+              <h3>Today's Intake</h3>
+              <span class="intake-date" id="intakeDate"></span>
+            </div>
+            <div class="week-strip">
+              <button class="wk-arrow" id="wkPrev" aria-label="Previous week">‹</button>
+              <div class="wk-days" id="wkDays"></div>
+              <button class="wk-arrow" id="wkNext" aria-label="Next week">›</button>
+            </div>
+            <div class="rings-row">
+              <div class="mini-col">
+                <div class="mini-ring">
+                  <svg viewBox="0 0 84 84">
+                    <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="9"/>
+                    <circle class="ring-prog" cx="42" cy="42" r="34" fill="none" stroke="#0d7f9e" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+                  </svg>
+                  <div class="mini-center"><span class="mv">–</span><span class="ml">FATIGUE</span></div>
+                </div>
+                <div class="mini-ring">
+                  <svg viewBox="0 0 84 84">
+                    <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="9"/>
+                    <circle class="ring-prog" cx="42" cy="42" r="34" fill="none" stroke="#0d7f9e" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+                  </svg>
+                  <div class="mini-center"><span class="mv">–</span><span class="ml">BLOAT</span></div>
+                </div>
+              </div>
+              <div class="big-ring">
+                <svg viewBox="0 0 220 220">
+                  <circle cx="110" cy="110" r="98" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
+                  <circle cx="110" cy="110" r="86" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="15"/>
+                  <circle class="ring-prog" id="bigProg" cx="110" cy="110" r="86" fill="none" stroke="#0d7f9e" stroke-width="15" stroke-linecap="round" stroke-dasharray="540.4" stroke-dashoffset="540.4"/>
+                </svg>
+                <div class="big-center">
+                  <span class="bl">Eaten</span>
+                  <span class="bv" id="eatenVal">0</span>
+                  <span class="bs" id="remainVal">3,405 kcal to go</span>
+                </div>
+              </div>
               <div class="mini-ring">
                 <svg viewBox="0 0 84 84">
                   <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="9"/>
-                  <circle cx="42" cy="42" r="34" fill="none" stroke="#0d7f9e" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+                  <circle class="ring-prog" cx="42" cy="42" r="34" fill="none" stroke="#0d7f9e" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
                 </svg>
-                <div class="mini-center"><span class="mv">–</span><span class="ml">FATIGUE</span></div>
-              </div>
-              <div class="mini-ring">
-                <svg viewBox="0 0 84 84">
-                  <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="9"/>
-                  <circle cx="42" cy="42" r="34" fill="none" stroke="#0d7f9e" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
-                </svg>
-                <div class="mini-center"><span class="mv">–</span><span class="ml">BLOAT</span></div>
+                <div class="mini-center"><span class="mv">0%</span><span class="ml">ADHERENCE</span></div>
               </div>
             </div>
-            <div class="big-ring">
-              <svg viewBox="0 0 220 220">
-                <circle cx="110" cy="110" r="98" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
-                <circle cx="110" cy="110" r="86" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="15"/>
-                <circle id="bigProg" cx="110" cy="110" r="86" fill="none" stroke="#0d7f9e" stroke-width="15" stroke-linecap="round" stroke-dasharray="540.4" stroke-dashoffset="540.4"/>
-              </svg>
-              <div class="big-center">
-                <span class="bl">Eaten</span>
-                <span class="bv" id="eatenVal">0</span>
-                <span class="bs" id="remainVal">3,405 kcal to go</span>
+            <div class="goal-line" id="goalLine">0% of daily goal</div>
+            <div class="goal-row">
+              <div class="goal-bar">
+                <div class="goal-fill" id="goalFill"></div>
+                <div class="goal-tick"></div>
               </div>
+              <div class="goal-info">i</div>
             </div>
-            <div class="mini-ring">
-              <svg viewBox="0 0 84 84">
-                <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="9"/>
-                <circle cx="42" cy="42" r="34" fill="none" stroke="#0d7f9e" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
-              </svg>
-              <div class="mini-center"><span class="mv">0%</span><span class="ml">ADHERENCE</span></div>
-            </div>
-          </div>
-          <div class="goal-line" id="goalLine">0% of daily goal</div>
-          <div class="goal-row">
-            <div class="goal-bar">
-              <div class="goal-fill" id="goalFill"></div>
-              <div class="goal-tick"></div>
-            </div>
-            <div class="goal-info">i</div>
-          </div>
-          <div class="nutrition-link">Nutrition Analysis ›</div>
-        </section>
+            <div class="nutrition-link">Nutrition Analysis ›</div>
+          </section>
+        </main>
+      </div>
+    </section>
 
-      </main>
-    </div>
+    <!-- ============ PROFILE ============ -->
+    <section class="view" id="view-profile">
+      <div class="scroller">
+        <div class="page">
+          <div class="page-bar">
+            <span class="bar-sp"></span>
+            <span></span>
+            <button class="done-btn" id="profileDone">Done</button>
+          </div>
+          <div class="profile-hero">
+            <div class="p-avatar" id="profileAvatar" aria-label="Profile photo">
+              <span class="glyph">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="8" r="3.6"/>
+                  <path d="M5 19.5c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/>
+                </svg>
+              </span>
+              <span class="p-pencil">
+                <svg viewBox="0 0 24 24">
+                  <path d="M5 19l1.2-4.2L16.7 4.3a1.5 1.5 0 0 1 2.1 0l.9.9a1.5 1.5 0 0 1 0 2.1L9.2 17.8 5 19z"/>
+                  <path d="M14.8 6.2l3 3"/>
+                </svg>
+              </span>
+            </div>
+            <div>
+              <div class="p-name">Jay</div>
+              <div class="p-sub">Tap the photo to change it</div>
+            </div>
+          </div>
+          <button class="p-remove hidden" id="pfpRemove">Remove photo</button>
+          <div class="menu-group">
+            <button class="menu-row" id="themeRow">
+              <span class="menu-ic">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 3.5c3.4 4.1 5.8 7.1 5.8 9.9a5.8 5.8 0 1 1-11.6 0c0-2.8 2.4-5.8 5.8-9.9z"/>
+                  <path d="M9.5 13.5a2.5 2.5 0 0 0 2.5 2.5"/>
+                </svg>
+              </span>
+              <span>Theme</span>
+              <span class="menu-chev">›</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ THEME ============ -->
+    <section class="view" id="view-theme">
+      <div class="scroller">
+        <div class="page">
+          <div class="page-bar">
+            <button class="back-btn" id="themeBack">‹ Back</button>
+            <span class="page-title">Theme</span>
+            <span class="bar-sp"></span>
+          </div>
+          <div class="theme-title">App colors</div>
+          <div class="theme-hint">Changes the calorie panel and the profile circle.</div>
+          <div class="swatches" id="swatches"></div>
+        </div>
+      </div>
+    </section>
+
   </div>
+  <input type="file" id="pfpInput" accept="image/*" class="hidden">
 
 <script>
   (function(){
@@ -282,23 +436,119 @@
     var GOAL = 3405; // daily calorie goal (bulk target)
     var now = new Date();
 
-    // Header date
+    /* ---------- themes ---------- */
+    var THEMES = {
+      teal:  {name:'Teal',  bg1:'#ddf0f4', bg2:'#c6e4ea', ring:'#0d7f9e', ink:'#12333c', inkDim:'#4a6b75', inkFaint:'#6b8b95', accent:'#0d7f9e'},
+      blue:  {name:'Blue',  bg1:'#dbe9fb', bg2:'#c7dbf6', ring:'#2f7cf6', ink:'#16283c', inkDim:'#46586e', inkFaint:'#6d7f95', accent:'#2f7cf6'},
+      green: {name:'Green', bg1:'#ddf2e4', bg2:'#c7e8d2', ring:'#1f9d55', ink:'#143322', inkDim:'#3f5c4a', inkFaint:'#6b8a74', accent:'#1f9d55'},
+      purple:{name:'Purple',bg1:'#e9e2f8', bg2:'#d7cbf1', ring:'#7c5cd6', ink:'#2a2140', inkDim:'#544a6e', inkFaint:'#7d7395', accent:'#7c5cd6'},
+      orange:{name:'Orange',bg1:'#fdeadd', bg2:'#f8dbc6', ring:'#dd7a28', ink:'#3c2413', inkDim:'#6b4f38', inkFaint:'#8f7358', accent:'#dd7a28'},
+      rose:  {name:'Rose',  bg1:'#fbe3ec', bg2:'#f5cddf', ring:'#d64f7e', ink:'#3c1a28', inkDim:'#6b4453', inkFaint:'#8f6d79', accent:'#d64f7e'}
+    };
+    function applyTheme(id){
+      var t = THEMES[id] || THEMES.teal;
+      var r = document.documentElement.style;
+      r.setProperty('--teal', t.ring);
+      r.setProperty('--ink', t.ink);
+      r.setProperty('--ink-dim', t.inkDim);
+      r.setProperty('--ink-faint', t.inkFaint);
+      r.setProperty('--accent', t.accent);
+      r.setProperty('--intake-bg1', t.bg1);
+      r.setProperty('--intake-bg2', t.bg2);
+      try{ localStorage.setItem('fuel2_theme', id); }catch(e){}
+      var sws = document.querySelectorAll('.swatch');
+      for (var i = 0; i < sws.length; i++){
+        sws[i].classList.toggle('sel', sws[i].getAttribute('data-theme') === id);
+      }
+    }
+    var swWrap = document.getElementById('swatches');
+    Object.keys(THEMES).forEach(function(id){
+      var t = THEMES[id];
+      var b = document.createElement('button');
+      b.className = 'swatch';
+      b.setAttribute('data-theme', id);
+      b.style.setProperty('--sw-ring', t.ring);
+      b.innerHTML =
+        '<span class="sw-preview" style="background:linear-gradient(135deg,' + t.bg1 + ',' + t.bg2 + ')">' +
+          '<span class="sw-ring"></span></span>' +
+        '<span class="sw-foot"><span class="sw-name">' + t.name + '</span>' +
+        '<span class="sw-check"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></span>';
+      b.addEventListener('click', function(){ applyTheme(id); });
+      swWrap.appendChild(b);
+    });
+    var savedTheme = null;
+    try{ savedTheme = localStorage.getItem('fuel2_theme'); }catch(e){}
+    applyTheme(savedTheme || 'teal');
+
+    /* ---------- navigation ---------- */
+    function show(id){
+      var vs = document.querySelectorAll('.view');
+      for (var i = 0; i < vs.length; i++){
+        vs[i].classList.toggle('active', vs[i].id === id);
+      }
+    }
+    document.getElementById('hdrAvatar').addEventListener('click', function(){ show('view-profile'); });
+    document.getElementById('profileDone').addEventListener('click', function(){ show('view-home'); });
+    document.getElementById('themeRow').addEventListener('click', function(){ show('view-theme'); });
+    document.getElementById('themeBack').addEventListener('click', function(){ show('view-profile'); });
+
+    /* ---------- profile photo ---------- */
+    var pfpInput = document.getElementById('pfpInput');
+    function setPfp(url){
+      ['hdrAvatar','profileAvatar'].forEach(function(id){
+        var el = document.getElementById(id);
+        var old = el.querySelector('img');
+        if (old) old.remove();
+        var g = el.querySelector('.glyph');
+        if (url){
+          var im = document.createElement('img');
+          im.src = url; im.alt = 'Profile photo';
+          el.insertBefore(im, el.firstChild);
+          if (g) g.style.display = 'none';
+        } else if (g){ g.style.display = ''; }
+      });
+      document.getElementById('pfpRemove').classList.toggle('hidden', !url);
+    }
+    document.getElementById('profileAvatar').addEventListener('click', function(){ pfpInput.click(); });
+    pfpInput.addEventListener('change', function(){
+      var f = pfpInput.files && pfpInput.files[0];
+      if (!f) return;
+      var img = new Image();
+      img.onload = function(){
+        var s = 192, side = Math.min(img.width, img.height);
+        var c = document.createElement('canvas');
+        c.width = c.height = s;
+        c.getContext('2d').drawImage(img,
+          (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, s, s);
+        var url = c.toDataURL('image/jpeg', 0.85);
+        try{ localStorage.setItem('fuel2_pfp', url); }catch(e){}
+        setPfp(url);
+        pfpInput.value = '';
+        try{ URL.revokeObjectURL(img.src); }catch(e){}
+      };
+      img.src = URL.createObjectURL(f);
+    });
+    document.getElementById('pfpRemove').addEventListener('click', function(){
+      try{ localStorage.removeItem('fuel2_pfp'); }catch(e){}
+      setPfp(null);
+    });
+    var savedPfp = null;
+    try{ savedPfp = localStorage.getItem('fuel2_pfp'); }catch(e){}
+    setPfp(savedPfp);
+
+    /* ---------- home content ---------- */
     document.getElementById('hdrDate').textContent =
       now.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
-
-    // Panel date
     document.getElementById('intakeDate').textContent =
       now.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
 
-    // No-data state
-    var eaten = 0;
+    var eaten = 0; // no data yet
     document.getElementById('eatenVal').textContent = eaten.toLocaleString('en-US');
     document.getElementById('remainVal').textContent =
       (GOAL - eaten).toLocaleString('en-US') + ' kcal to go';
     document.getElementById('goalLine').textContent = '0% of daily goal';
     document.getElementById('goalFill').style.width = '0%';
 
-    // Week strip (Sunday start), arrows shift weeks
     var DOWS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     var weekOffset = 0;
     function renderWeek(){
@@ -320,8 +570,6 @@
     document.getElementById('wkNext').addEventListener('click', function(){ weekOffset++; renderWeek(); });
     renderWeek();
 
-    // Sticky header goes frosted once the inner scroller moves. The fixed body
-    // means the browser never overscrolls, so no pull-to-refresh and no gesture hacks.
     var h = document.querySelector('.fuel-header');
     var sc = document.getElementById('scroller');
     function onScroll(){ h.classList.toggle('scrolled', sc.scrollTop > 2); }
