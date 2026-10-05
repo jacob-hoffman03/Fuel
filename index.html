@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- Fuel v2 · 2026.10.04-e · light mode · header + Health status panel · sticky frosted header · left pill shell · no pull-to-refresh -->
+<!-- Fuel v2 · 2026.10.04-f · light mode · header + Health status panel · sticky frosted header · left pill shell · app-shell scroll (no pull-to-refresh, native bounce) -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#edf0f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,14 +20,27 @@
     --pill:#ffffff;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%;overscroll-behavior-y:none}
+  html,body{height:100%}
   body{
+    position:fixed;
+    inset:0;
+    overflow:hidden;
     background:var(--bg);
     color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  }
+  .app{
+    height:100dvh;
     max-width:480px;
     margin:0 auto;
-    min-height:100dvh;
+    position:relative;
+  }
+  .scroller{
+    height:100%;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;
+    background:var(--bg);
   }
   header.fuel-header{
     position:sticky;
@@ -121,54 +134,53 @@
 </style>
 </head>
 <body>
-  <header class="fuel-header">
-    <div class="slot-left">
-      <span class="stat-pill" aria-label="Status">
-        <svg viewBox="0 0 24 24">
-          <rect x="6" y="2.5" width="10.5" height="19" rx="2.5"/>
-          <rect class="badge" x="13.5" y="15.5" width="7" height="4.4" rx="1.2"/>
-          <path d="M21.2 16.9v1.6"/>
-        </svg>
-        <span class="ph">—</span>
-      </span>
-    </div>
-    <div class="slot-date" id="hdrDate"></div>
-    <div class="slot-right">
-      <div class="avatar" aria-label="Profile">
-        <svg viewBox="0 0 24 24">
-          <circle cx="12" cy="8" r="3.6"/>
-          <path d="M5 19.5c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/>
-        </svg>
-      </div>
-    </div>
-  </header>
+  <div class="app">
+    <div class="scroller" id="scroller">
+      <header class="fuel-header">
+        <div class="slot-left">
+          <span class="stat-pill" aria-label="Status">
+            <svg viewBox="0 0 24 24">
+              <rect x="6" y="2.5" width="10.5" height="19" rx="2.5"/>
+              <rect class="badge" x="13.5" y="15.5" width="7" height="4.4" rx="1.2"/>
+              <path d="M21.2 16.9v1.6"/>
+            </svg>
+            <span class="ph">—</span>
+          </span>
+        </div>
+        <div class="slot-date" id="hdrDate"></div>
+        <div class="slot-right">
+          <div class="avatar" aria-label="Profile">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="3.6"/>
+              <path d="M5 19.5c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/>
+            </svg>
+          </div>
+        </div>
+      </header>
 
-  <main class="sheet">
-    <h2 class="panel-title">Health status</h2>
-    <section class="stat-card">
-      <div class="label">Vitals</div>
-      <div class="big">0 of 5</div>
-      <span class="tag">No data</span>
-    </section>
-  </main>
+      <main class="sheet">
+        <h2 class="panel-title">Health status</h2>
+        <section class="stat-card">
+          <div class="label">Vitals</div>
+          <div class="big">0 of 5</div>
+          <span class="tag">No data</span>
+        </section>
+      </main>
+    </div>
+  </div>
 
 <script>
   (function(){
     var d = new Date();
     var s = d.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
     document.getElementById('hdrDate').textContent = s;
+    // Sticky header goes frosted once the inner scroller moves. The fixed body
+    // means the browser never overscrolls, so no pull-to-refresh and no gesture hacks.
     var h = document.querySelector('.fuel-header');
-    function onScroll(){ h.classList.toggle('scrolled', window.scrollY > 2); }
-    window.addEventListener('scroll', onScroll, {passive:true});
+    var sc = document.getElementById('scroller');
+    function onScroll(){ h.classList.toggle('scrolled', sc.scrollTop > 2); }
+    sc.addEventListener('scroll', onScroll, {passive:true});
     onScroll();
-    // Kill pull-to-refresh: at the very top, a downward drag belongs to the page, not the browser.
-    var touchStartY = 0;
-    document.addEventListener('touchstart', function(e){
-      touchStartY = e.touches[0].clientY;
-    }, {passive:true});
-    document.addEventListener('touchmove', function(e){
-      if (window.scrollY <= 0 && e.touches[0].clientY > touchStartY) e.preventDefault();
-    }, {passive:false});
   })();
 </script>
 </body>
