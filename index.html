@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- Fuel v2 · 2026.10.05-d · panel text scaled down ~12% -->
+<!-- Fuel v2 · 2026.10.05-e · v1 calorie panel, functional: reads fuel.v1, dual ring, week nav, zone bar, minis, analysis -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#edf0f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -160,8 +160,6 @@
   .mini-col{display:flex;flex-direction:column;gap:16px}
   .mini-ring{position:relative;width:58px;height:58px}
   .mini-ring svg{width:58px;height:58px;transform:rotate(-90deg);display:block}
-  .ring-prog{stroke:#fff}
-  .ring-fatigue{stroke:#2dd4a8}
   .mini-center{
     position:absolute;inset:0;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
@@ -196,6 +194,56 @@
     position:relative;text-align:center;
     font-size:22px;font-weight:800;letter-spacing:-.3px;cursor:pointer;
   }
+  .wk-day:disabled{opacity:.45}
+  .wk-day.sel .dnum{outline:2px solid rgba(255,255,255,.65);outline-offset:3px}
+  .wk-day .dot.log{background:#fff}
+  .wk-day .dot.now{background:#fff}
+  .todayrow{display:flex;justify-content:center;margin:0 0 10px}
+  .todaypill{background:rgba(255,255,255,.18);border:0;color:#fff;font-size:13px;font-weight:700;padding:7px 18px;border-radius:999px;cursor:pointer}
+  .mini-ring{background:none;border:0;padding:0;cursor:pointer}
+  .goal-line b{font-weight:800}
+  .bs2.on{color:#ffb03a}
+  /* ---------- bottom sheet (zone + score details) ---------- */
+  .sheet-back{position:fixed;inset:0;background:rgba(8,18,26,.45);opacity:0;pointer-events:none;transition:opacity .22s;z-index:60}
+  .sheet-back.open{opacity:1;pointer-events:auto}
+  .bsheet{position:fixed;left:0;right:0;bottom:0;z-index:61;background:#fff;border-radius:24px 24px 0 0;
+    padding:10px 22px calc(env(safe-area-inset-bottom,0px) + 26px);
+    transform:translateY(105%);transition:transform .26s ease;max-height:78dvh;overflow-y:auto;color:var(--text)}
+  .bsheet.open{transform:none}
+  .sheet-grab{width:44px;height:5px;border-radius:3px;background:#dde2ea;margin:2px auto 14px}
+  .irow{font-size:14.5px;line-height:1.55;color:#3c4450;margin-bottom:10px}
+  .irow b{color:var(--text)}
+  .zonenow{margin-bottom:14px}
+  .zonenow b{font-size:19px}
+  .zonenow p{font-size:14.5px;color:#3c4450;margin-top:4px;line-height:1.55}
+  .zonerow{display:flex;gap:12px;margin-bottom:14px}
+  .zdot{flex:none;width:12px;height:12px;border-radius:50%;margin-top:4px}
+  .zonerow b{font-size:15.5px}
+  .zrange{font-weight:500;color:#6b7482;font-size:13.5px}
+  .zonerow p{font-size:14px;color:#3c4450;margin-top:3px;line-height:1.55}
+  .zonefoot{font-size:13px;color:#6b7482;line-height:1.55;border-top:1px solid #eef1f5;padding-top:12px}
+  /* ---------- nutrition analysis view ---------- */
+  .ana-card{background:#fff;border-radius:22px;padding:20px;margin-bottom:14px;box-shadow:0 2px 10px rgba(20,30,45,.06)}
+  .ana-dark{background:linear-gradient(165deg,var(--intake-bg1),var(--intake-bg2));color:#fff}
+  .ana-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+  .ana-lab{display:block;font-size:13px;font-weight:600;color:rgba(255,255,255,.75)}
+  .ana-top b{font-size:34px;font-weight:800;letter-spacing:-.5px}
+  .ana-goal{font-size:14px;font-weight:600;color:rgba(255,255,255,.8)}
+  .ana-ring{width:168px;margin:6px auto 4px}
+  .ana-ring svg{width:100%;display:block}
+  table.ameal{width:100%;border-collapse:collapse;margin-top:8px}
+  table.ameal td{padding:8px 2px;font-size:14.5px;font-weight:600;border-top:1px solid rgba(255,255,255,.16)}
+  table.ameal tr:first-child td{border-top:0}
+  table.ameal td:nth-child(2),table.ameal td:nth-child(3){text-align:right;font-variant-numeric:tabular-nums}
+  .mdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}
+  .ana-note{font-size:14.5px;line-height:1.55;color:rgba(255,255,255,.88);margin-top:10px}
+  .ana-note b{color:#fff}
+  .ana-h{font-size:18px;font-weight:800;margin-bottom:12px}
+  .amac{margin-bottom:12px}
+  .amac-top{display:flex;justify-content:space-between;font-size:14.5px;font-weight:700;margin-bottom:6px}
+  .amac-top i{font-style:normal;font-weight:500;color:var(--text-dim)}
+  .amac-bar{height:10px;border-radius:6px;background:#eef1f5;overflow:hidden}
+  .amac-bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#fff))}
   /* ---------- profile / theme pages ---------- */
   .page{padding:0 20px calc(env(safe-area-inset-bottom, 0px) + 30px)}
   .page-bar{
@@ -320,53 +368,59 @@
               <div class="wk-days" id="wkDays"></div>
               <button class="wk-arrow" id="wkNext" aria-label="Next week">›</button>
             </div>
+            <div class="todayrow" id="todayRow" style="display:none">
+              <button class="todaypill" id="todayPill">Today</button>
+            </div>
             <div class="rings-row">
               <div class="mini-col">
-                <div class="mini-ring">
+                <button class="mini-ring" id="fatigueWheel" aria-label="Fatigue details">
                   <svg viewBox="0 0 84 84">
-                    <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="9"/>
-                    <circle class="ring-prog ring-fatigue" cx="42" cy="42" r="34" fill="none" stroke="#2dd4a8" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+                    <circle cx="42" cy="42" r="36" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="9"/>
+                    <circle id="fatigueArc" cx="42" cy="42" r="36" fill="none" stroke="#2fe3b6" stroke-width="9" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2"/>
                   </svg>
-                  <div class="mini-center"><span class="mv">–</span><span class="ml">FATIGUE</span></div>
-                </div>
-                <div class="mini-ring">
+                  <span class="mini-center"><span class="mv" id="fatigueNum">–</span><span class="ml">FATIGUE</span></span>
+                </button>
+                <button class="mini-ring" id="bloatWheel" aria-label="Bloat details">
                   <svg viewBox="0 0 84 84">
-                    <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="9"/>
-                    <circle class="ring-prog" cx="42" cy="42" r="34" fill="none" stroke="#0d7f9e" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+                    <circle cx="42" cy="42" r="36" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="9"/>
+                    <circle id="bloatArc" cx="42" cy="42" r="36" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2"/>
                   </svg>
-                  <div class="mini-center"><span class="mv">–</span><span class="ml">BLOAT</span></div>
-                </div>
+                  <span class="mini-center"><span class="mv" id="bloatNum">–</span><span class="ml">BLOAT</span></span>
+                </button>
               </div>
               <div class="big-ring">
-                <svg viewBox="0 0 220 220">
-                  <circle cx="110" cy="110" r="98" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
-                  <circle cx="110" cy="110" r="86" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="15"/>
-                  <circle class="ring-prog" id="bigProg" cx="110" cy="110" r="86" fill="none" stroke="#0d7f9e" stroke-width="15" stroke-linecap="round" stroke-dasharray="540.4" stroke-dashoffset="540.4"/>
+                <svg viewBox="0 0 128 128">
+                  <circle cx="64" cy="64" r="56" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="11"/>
+                  <circle id="ringMaint" cx="64" cy="64" r="56" fill="none" stroke="#ffffff" stroke-width="11" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="351.9"/>
+                  <circle id="ringSurpTrack" cx="64" cy="64" r="46" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="5"/>
+                  <circle id="ringSurp" cx="64" cy="64" r="46" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"/>
                 </svg>
                 <div class="big-center">
                   <span class="bl">Eaten</span>
-                  <span class="bv" id="eatenVal">0</span>
-                  <span class="bs" id="remainVal">3,405 kcal</span>
-                  <span class="bs2">to goal</span>
+                  <span class="bv" id="calEaten">0</span>
+                  <span class="bs" id="flagKcal"></span>
+                  <span class="bs2" id="flagSur"></span>
                 </div>
               </div>
-              <div class="mini-ring">
-                <svg viewBox="0 0 84 84">
-                  <circle cx="42" cy="42" r="34" fill="none" stroke="rgba(255,255,255,.60)" stroke-width="9"/>
-                  <circle class="ring-prog" cx="42" cy="42" r="34" fill="none" stroke="#0d7f9e" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
-                </svg>
-                <div class="mini-center"><span class="mv">0%</span><span class="ml">ADHERENCE</span></div>
+              <div class="mini-col">
+                <button class="mini-ring" id="adhWheel" aria-label="Adherence details">
+                  <svg viewBox="0 0 84 84">
+                    <circle cx="42" cy="42" r="36" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="9"/>
+                    <circle id="adhArc" cx="42" cy="42" r="36" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2"/>
+                  </svg>
+                  <span class="mini-center"><span class="mv" id="adhNum">–</span><span class="ml">ADHERENCE</span></span>
+                </button>
               </div>
             </div>
-            <div class="goal-line" id="goalLine">0% of daily goal</div>
+            <div class="goal-line"><b id="progPct">0%</b> of daily goal</div>
             <div class="goal-row">
               <div class="goal-bar">
-                <div class="goal-fill" id="goalFill"></div>
-                <div class="goal-tick"></div>
+                <div class="goal-fill" id="spFill"></div>
+                <div class="goal-tick" id="spMark"></div>
               </div>
-              <div class="goal-info">i</div>
+              <button class="goal-info" id="zoneInfo" aria-label="Zone details">i</button>
             </div>
-            <div class="nutrition-link">Nutrition Analysis ›</div>
+            <button class="nutrition-link" id="analysisLink">Nutrition Analysis ›</button>
           </section>
         </main>
       </div>
@@ -434,13 +488,48 @@
       </div>
     </section>
 
+    <!-- ============ NUTRITION ANALYSIS ============ -->
+    <section class="view" id="view-analysis">
+      <div class="scroller">
+        <div class="page">
+          <div class="page-bar">
+            <button class="back-btn" id="analysisBack">‹ Back</button>
+            <span class="page-title" id="anaTitle">Today</span>
+            <span class="bar-sp"></span>
+          </div>
+          <div class="ana-card ana-dark">
+            <div class="ana-top">
+              <div><span class="ana-lab">Eaten</span><b id="aCal">0</b></div>
+              <span class="ana-goal" id="aGoal"></span>
+            </div>
+            <div class="ana-ring">
+              <svg viewBox="0 0 128 128">
+                <circle cx="64" cy="64" r="54" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="13"/>
+                <g id="aSeg" transform="rotate(-90 64 64)"></g>
+              </svg>
+            </div>
+            <table class="ameal"><tbody id="aMealTable"></tbody></table>
+            <p class="ana-note" id="aNote"></p>
+          </div>
+          <div class="ana-card">
+            <h4 class="ana-h">Macros</h4>
+            <div id="aMacros"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div>
   <input type="file" id="pfpInput" accept="image/*" class="hidden">
+  <div class="sheet-back" id="sheetBack"></div>
+  <div class="bsheet" id="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-grab"></div>
+    <div id="sheetBody"></div>
+  </div>
 
 <script>
   (function(){
     "use strict";
-    var GOAL = 3405; // daily calorie goal (bulk target)
     var now = new Date();
 
     /* ---------- themes ---------- */
@@ -601,39 +690,532 @@
     try{ savedPfp = localStorage.getItem('fuel2_pfp'); }catch(e){}
     setPfp(savedPfp);
 
+    /* ============ Fuel v1 engine (read-only port) ============
+       Reads Jay's real log from the same localStorage key v1 uses
+       ("fuel.v1"), so his days, foods and goals show up here. This port
+       never writes back: no save(), no day() auto-create — pure reads. */
+    var MEALS = ["breakfast","lunch","dinner","snacks","supplements"];
+    var FOOD_MEALS = ["breakfast","lunch","dinner","snacks"];
+    var MEAL_SEG = {breakfast:"#ffdca8", lunch:"#ffab3d", dinner:"#ff8f3d", snacks:"#ff7f2a", supplements:"#8b8bf5"};
+    var MEAL_LABEL = {breakfast:"Breakfast", lunch:"Lunch", dinner:"Dinner", snacks:"Snacks", supplements:"Supplements"};
+    var WORK_WEEKDAYS_DEF = [1,3,5,6];
+    var ACT_TIERS = [
+      {key:"sedentary", pal:1.2, label:"Sedentary"},
+      {key:"light", pal:1.375, label:"Light"},
+      {key:"moderate", pal:1.465, label:"Moderate"},
+      {key:"active", pal:1.55, label:"Active"},
+      {key:"very", pal:1.725, label:"Very active"},
+      {key:"extra", pal:1.9, label:"Extra active"}
+    ];
+    function actPAL(p){
+      for (var i=0;i<ACT_TIERS.length;i++) if (ACT_TIERS[i].key === (p && p.activityKey)) return ACT_TIERS[i].pal;
+      return ACT_TIERS[2].pal;
+    }
+    var NUTR_ALIASES = [
+      [/vitamin\s*d|cholecalciferol/i,"Vitamin D"], [/vitamin\s*a|retinol/i,"Vitamin A"],
+      [/vitamin\s*b6|pyridoxine/i,"Vitamin B6"], [/vitamin\s*b12|cobalamin/i,"Vitamin B12"],
+      [/vitamin\s*c|ascorbic/i,"Vitamin C"], [/vitamin\s*e|tocopherol|tocotrienol/i,"Vitamin E"],
+      [/vitamin\s*k/i,"Vitamin K"], [/thiamin|vitamin\s*b1/i,"Thiamin"], [/riboflavin|vitamin\s*b2/i,"Riboflavin"],
+      [/niacin|nicotin|vitamin\s*b3/i,"Niacin"], [/folate|folic|vitamin\s*b9/i,"Folate"],
+      [/biotin|vitamin\s*b7/i,"Biotin"], [/pantothenic|vitamin\s*b5/i,"Pantothenic acid"],
+      [/calcium/i,"Calcium"], [/iron/i,"Iron"], [/magnesium/i,"Magnesium"], [/phosphorus/i,"Phosphorus"],
+      [/iodine/i,"Iodine"], [/zinc/i,"Zinc"], [/selenium/i,"Selenium"], [/copper/i,"Copper"],
+      [/manganese/i,"Manganese"], [/chromium/i,"Chromium"], [/molybdenum/i,"Molybdenum"],
+      [/potassium/i,"Potassium"], [/\bsodium\b/i,"Sodium"], [/chloride/i,"Chloride"],
+      [/fiber|fibre/i,"Fiber"], [/added\s*sugars?/i,"Added Sugars"], [/sugar/i,"Sugars"],
+      [/saturated\s*fat/i,"Saturated Fat"], [/cholesterol/i,"Cholesterol"], [/creatine/i,"Creatine"]
+    ];
+    var S = (function(){
+      try{
+        var s = JSON.parse(localStorage.getItem("fuel.v1"));
+        if (s && typeof s === "object"){
+          if (!s.days || typeof s.days !== "object") s.days = {};
+          if (!s.goals || typeof s.goals !== "object") s.goals = {};
+          return s;
+        }
+      }catch(e){}
+      return {days:{}, goals:{}};
+    })();
+    function dstr(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+    function todayStr(){ return dstr(new Date()); }
+    function addDays(ds, n){ var d = new Date(ds+"T12:00:00"); d.setDate(d.getDate()+n); return dstr(d); }
+    function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+    function r1(n){ return Math.round(n*10)/10; }
+    function barW(v,goal){ return (goal>0 ? Math.min(v/goal*100,100) : 0)+"%"; }
+    var dayOffset = 0, weekOff = 0;
+    function viewDate(){ var d = new Date(); d.setDate(d.getDate()+dayOffset); return dstr(d); }
+    function emptyDay(){ return {meals:{breakfast:[],lunch:[],dinner:[],snacks:[],supplements:[]}, waterOz:0}; }
+    function getDay(k){ return S.days[k] || emptyDay(); }
+    function totals(k){
+      var d = getDay(k), t = {cal:0,p:0,c:0,f:0};
+      MEALS.forEach(function(m){ ((d.meals||{})[m]||[]).forEach(function(e){ t.cal+=e.cal||0; t.p+=e.p||0; t.c+=e.c||0; t.f+=e.f||0; }); });
+      return t;
+    }
+    function mealCals(k){
+      var d = getDay(k), o = {};
+      MEALS.forEach(function(m){ o[m] = ((d.meals||{})[m]||[]).reduce(function(a,e){ return a+(e.cal||0); },0); });
+      return o;
+    }
+    function canonNutr(name){
+      var t = String(name||"").trim(), i;
+      for (i=0;i<NUTR_ALIASES.length;i++) if (NUTR_ALIASES[i][0].test(t)) return NUTR_ALIASES[i][1];
+      return t.replace(/\w\S*/g, function(w){ return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase(); });
+    }
+    function mealMacros(ds){
+      var d = S.days[ds] || {meals:{}}, out = {};
+      MEALS.forEach(function(m){
+        var t = {cal:0,p:0,c:0,f:0,fiber:0,sugars:0,sodium:0,pot:0};
+        ((d.meals||{})[m]||[]).forEach(function(e){
+          t.cal+=e.cal||0; t.p+=e.p||0; t.c+=e.c||0; t.f+=e.f||0;
+          (e.nutrs||[]).forEach(function(x){
+            var n = canonNutr(x.n), u = String(x.u||"").toLowerCase();
+            var mg = u==="g" ? x.amt*1000 : u==="mcg" ? x.amt/1000 : x.amt;
+            if (n==="Fiber") t.fiber += mg/1000;
+            else if (n==="Sugars"||n==="Added Sugars") t.sugars += mg/1000;
+            else if (n==="Sodium") t.sodium += mg;
+            else if (n==="Potassium") t.pot += mg;
+          });
+        });
+        out[m] = t;
+      });
+      return out;
+    }
+    function alcData(d){
+      var a = d.alc;
+      if (typeof a === "number") a = {shot:0, beer:a, cocktail:0};
+      a = Object.assign({shot:0, beer:0, cocktail:0}, a||{});
+      return {a:a, std:a.shot*1+a.beer*1+a.cocktail*1.5, kcal:a.shot*97+a.beer*150+a.cocktail*200};
+    }
+    function dayHasXW(ds){
+      var d = S.days[ds||viewDate()]; if(!d) return false;
+      return MEALS.some(function(m){ return ((d.meals||{})[m]||[]).some(function(e){ return e.xw; }); });
+    }
+    function waterCalc(ds){
+      var g = S.goals || {};
+      if (g.water>0) return {target:g.water, manual:true};
+      if (!(g.maintenance>0)) return {target:0, manual:false, unset:true};
+      var tdee = g.maintenance, pal = actPAL(g.profile);
+      var perKcal = pal>=1.7 ? 1.2 : 1.0;
+      var ml = tdee*perKcal*0.8 + (dayHasXW(ds) ? 500 : 0);
+      var tier = "Moderate";
+      for (var i=0;i<ACT_TIERS.length;i++) if (ACT_TIERS[i].key === ((g.profile||{}).activityKey)) tier = ACT_TIERS[i].label;
+      return {target:Math.max(4, Math.min(24, Math.round(ml/240))), manual:false, tier:tier};
+    }
+    function workDays(){
+      return Array.isArray(S.workDays) ? S.workDays.filter(function(x){ return x>=0&&x<=6; }) : WORK_WEEKDAYS_DEF.slice();
+    }
+    function isWorkDayAuto(kstr){ return workDays().indexOf(new Date(kstr+"T12:00:00").getDay())>=0; }
+    function dayType(kstr){
+      var ov = (S.dayTypeOv||{})[kstr];
+      if (ov==="work" || ov==="off") return ov;
+      return isWorkDayAuto(kstr) ? "work" : "off";
+    }
+    function mealTimeStats(meal, work){
+      var a = (S.mealTimes && S.mealTimes[meal]) || [];
+      var f = a.filter(function(o){
+        if (!o || typeof o !== "object" || typeof o.t !== "number") return false;
+        return work==null ? true : o.w === (work?1:0);
+      });
+      if (!f.length) return {avg:0, n:0};
+      var sx=0, sy=0;
+      f.forEach(function(o){ var r2=o.t/1440*2*Math.PI; sx+=Math.cos(r2); sy+=Math.sin(r2); });
+      var avg = Math.atan2(sy/f.length, sx/f.length)/(2*Math.PI)*1440;
+      avg = ((avg%1440)+1440)%1440;
+      return {avg:avg, n:f.length};
+    }
+    function fmtClock(mins){
+      mins = ((Math.round(mins)%1440)+1440)%1440;
+      var h = Math.floor(mins/60), m = mins%60, ap = h>=12?"PM":"AM";
+      h = h%12; if (h===0) h=12;
+      return h+":"+String(m).padStart(2,"0")+" "+ap;
+    }
+    function goalTotal(){ var g = S.goals||{}; return (g.maintenance>0?g.maintenance:0)+(g.surplus>0?g.surplus:0); }
+    function fiberTarget(){
+      var ct = ((S.goals||{}).nutrTargets||{})["Fiber"];
+      if (ct && ct.val>0) return ct.val;
+      var tot = goalTotal();
+      return tot>0 ? Math.round(14*tot/1000) : 0;
+    }
+    function statusInfo(){
+      var k = viewDate(), t = totals(k), g = S.goals||{};
+      var mCal = g.maintenance>0?g.maintenance:0, sAdd = g.surplus>0?g.surplus:0, tCal = mCal+sAdd, eCal = t.cal;
+      var defc = Math.round(mCal-eCal), dpct = mCal>0?Math.round(defc/mCal*100):0;
+      var pAte = Math.round(t.p||0), pGoal = g.protein||0, lowP = pGoal>0 && pAte < pGoal*0.8;
+      var cls, title, det, grad;
+      if (mCal<=0){
+        cls="unset"; title="Set your goals"; grad="linear-gradient(90deg,#8a8aa3,#b9b9d6)";
+        det = "Add your profile in Goals to get a maintenance target — then this bar tracks your zone.";
+      } else if (eCal < mCal){
+        cls="deficit"; title="Calorie deficit"; grad="linear-gradient(90deg,#ff3b30,#ff8a5c)";
+        var tier = defc>=500 ? "deep enough to stall muscle gain" : defc>=250 ? "big enough to slow gains if it keeps up" : "small gap — closable with a snack";
+        det = defc.toLocaleString()+" cal under maintenance ("+dpct+"%) — "+tier;
+        if (lowP) det += ". Protein only "+pAte+"g of "+pGoal+"g — low protein makes a deficit cost more muscle";
+      } else if (eCal < tCal){
+        cls="surplus"; title="Past maintenance"; grad="linear-gradient(90deg,#ff9f43,#ffd23d)";
+        det = Math.round(tCal-eCal).toLocaleString()+" cal to your daily target";
+        if (lowP) det += " · protein "+pAte+"g of "+pGoal+"g";
+      } else {
+        cls="ontrack"; title="On track"; grad="linear-gradient(90deg,#1faa5c,#66e39a)";
+        det = "+"+Math.round(eCal-mCal).toLocaleString()+" over maintenance — gaining zone";
+      }
+      return {cls:cls, title:title, det:det, grad:grad, eCal:eCal, mCal:mCal, tCal:tCal};
+    }
+    function trainDay(ds){ return {}; } /* training log isn't ported — panel never reads .trained */
+    function dayTotals(ds){
+      var d = S.days[ds] || {};
+      var t = totals(ds), mm = mealMacros(ds);
+      var n = {fiber:0, sugars:0, sodium:0, pot:0};
+      MEALS.forEach(function(m){ n.fiber+=mm[m].fiber; n.sugars+=mm[m].sugars; n.sodium+=mm[m].sodium; n.pot+=mm[m].pot; });
+      var w = waterCalc(ds);
+      var waterOz = Math.round((d.waterOz||0)*10)/10;
+      var foodLogged = t.cal>0;
+      return {ds:ds, logged:foodLogged||waterOz>0, foodLogged:foodLogged, cal:t.cal, p:t.p, c:t.c, f:t.f,
+        fiber:n.fiber, sugars:n.sugars, sodium:n.sodium, pot:n.pot, waterOz:waterOz,
+        waterRatio:(w.target>0 && !w.unset) ? waterOz/(w.target*8) : null,
+        alcStd:alcData(d).std, trained:!!trainDay(ds).done};
+    }
+    function dayHit(ds){
+      var t = dayTotals(ds), goal = goalTotal(), pt = (S.goals||{}).protein;
+      if (!t.foodLogged || !(goal>0 && pt>0)) return false;
+      return t.cal>=goal*0.9 && t.cal<=goal*1.1 && t.p>=pt*0.9;
+    }
+    function adherenceSeries(n){
+      var out = [], m = n||14, i, ds, t;
+      for (i=m-1;i>=0;i--){ ds = addDays(todayStr(),-i); t = dayTotals(ds); t.hit = dayHit(ds); out.push(t); }
+      return out;
+    }
+    function adherenceStats(){
+      var goal = goalTotal(), pt = (S.goals||{}).protein;
+      var food = adherenceSeries(14).filter(function(x){ return x.foodLogged; });
+      var hit = food.filter(function(x){ return x.hit; }).length;
+      var noGoal = !(goal>0 && pt>0);
+      return {n:food.length, hit:hit, pct:(food.length>0 && !noGoal) ? Math.round(hit/food.length*100) : null};
+    }
+    /* Fatigue estimate — v1's consumption-only model (2026.09.25-e), ported whole:
+       base 30 (Steady), moves only on consumed signals: hydration deficit late
+       in the day, carb-dominant / big / sugary recent meals, overdue meals,
+       yesterday's + today's alcohol, under-fueling. Missing data stays neutral. */
+    function tiredLevel(ds){
+      ds = ds || todayStr();
+      var d = S.days[ds] || {};
+      function cap1(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+      var pts = 30, why = [];
+      var nowD = new Date(), hr = nowD.getHours();
+      var w = waterCalc(ds);
+      if (w.target>0 && !w.unset){
+        var woz = w.target*8, wr = (d.waterOz||0)/woz;
+        if (hr>=14){
+          if (wr<0.5){ pts+=8; why.push("Water is under half your target and it's past 2pm — even ~1.5% dehydration brings on fatigue (Ganio et al. 2011)."); }
+          else if (wr<0.8){ pts+=4; why.push("Water is at "+Math.round(wr*100)+"% of target this afternoon — mild dehydration drags energy down."); }
+        }
+      }
+      var MEAL_AT = {breakfast:8, lunch:12.5, dinner:18.5};
+      var wtired = dayType(ds)==="work";
+      ["breakfast","lunch","dinner"].forEach(function(m){
+        var s = mealTimeStats(m, wtired);
+        if (s.n>=3) MEAL_AT[m] = s.avg/60;
+      });
+      var mm = mealMacros(ds);
+      var lastM = null, lastAt = -1, nowMs = Date.now();
+      ["dinner","lunch","breakfast"].forEach(function(m){
+        ((d.meals||{})[m]||[]).forEach(function(e){
+          if (e.t && e.t<=nowMs && nowMs-e.t<2*3600e3){
+            var dt = new Date(e.t), h = dt.getHours()+dt.getMinutes()/60;
+            if (h>lastAt){ lastAt=h; lastM=m; }
+          }
+        });
+      });
+      if (!lastM){
+        ["dinner","lunch","breakfast"].forEach(function(m){
+          if (mm[m].cal>=200 && MEAL_AT[m]<=hr && MEAL_AT[m]>lastAt){ lastAt = MEAL_AT[m]; lastM = m; }
+        });
+      }
+      if (lastM && (hr-lastAt)<2){
+        var x = mm[lastM];
+        var carbFrac = x.cal>0 ? (x.c*4)/x.cal : 0;
+        var netC = Math.max(0, x.c-x.fiber);
+        if (carbFrac>=0.6 && netC>=40){
+          var blunted = x.p>=20 || x.fiber>=8;
+          pts += blunted ? 4 : 8;
+          why.push(cap1(lastM)+" was carb-dominant ("+Math.round(netC)+"g net carbs)"+(blunted?" but the protein/fiber blunts the dip":"")+" — glucose quiets the brain's orexin wakefulness neurons for an hour or two (Burdakov et al. 2005, 2006).");
+        }
+        if (x.cal>=900 || x.f>=40){
+          pts+=6;
+          why.push(cap1(lastM)+" was a big meal ("+Math.round(x.cal).toLocaleString()+" kcal) — larger solid meals pull sleepiness up with them, whatever the macros (Wells et al. 1997).");
+        }
+        else if (x.cal>=650){
+          pts+=3;
+          why.push(cap1(lastM)+" was a hearty one ("+Math.round(x.cal).toLocaleString()+" kcal) — even a moderately big meal deepens the post-meal dip.");
+        }
+        if ((x.sugars||0)>=60){
+          pts+=4;
+          why.push(cap1(lastM)+" carried "+Math.round(x.sugars)+"g sugar — past ~60g the crash outweighs the lift, and fatigue climbs within the hour.");
+        }
+      }
+      var overdue = null;
+      ["breakfast","lunch","dinner"].forEach(function(m){
+        var s = mealTimeStats(m, wtired);
+        if (s.n>=5 && (mm[m]||{cal:0}).cal<=0){
+          var late = hr - s.avg/60;
+          if (late>=1.5 && (!overdue || late>overdue.late)) overdue = {m:m, late:late, at:s.avg};
+        }
+      });
+      if (overdue){
+        pts += 4;
+        why.push(cap1(overdue.m)+" is overdue — you usually eat around "+fmtClock(overdue.at)+", and running past your own rhythm drags energy down.");
+      }
+      var yd = addDays(ds,-1);
+      var yStd = alcData(S.days[yd]||{}).std, tStd = alcData(d).std;
+      var yalc = Math.max(yStd, hr<12 ? tStd : 0);
+      if (yalc>0){
+        var p = Math.min(18, Math.round(yalc*5));
+        pts+=p;
+        why.push(Math.round(yalc)+" drink"+(Math.round(yalc)===1?"":"s")+" "+(hr<12&&tStd>yStd?"last night":"yesterday")+" — next-day fatigue runs dose-dependent with evening drinking (Ebrahim et al. 2013).");
+      }
+      if (hr>=12 && tStd>0){
+        var p2 = Math.min(12, Math.round(tStd*4));
+        pts+=p2;
+        why.push(Math.round(tStd)+" drink"+(Math.round(tStd)===1?"":"s")+" today — alcohol is a sedative; it drags energy down directly, more with every drink.");
+      }
+      if (hr>=15){
+        var goal = goalTotal();
+        var ateToday = FOOD_MEALS.some(function(m){ return (((d.meals||{})[m]||[]).length>0); });
+        if (goal>0 && ateToday){
+          var eaten = 0;
+          FOOD_MEALS.forEach(function(m){ eaten += (mm[m]||{cal:0}).cal; });
+          var ratio = eaten/goal;
+          if (ratio<0.33){ pts+=10; why.push("Only "+Math.round(eaten).toLocaleString()+" kcal so far ("+Math.round(ratio*100)+"% of your goal) — running on fumes drags energy down on its own."); }
+          else if (ratio<0.5){ pts+=6; why.push("At "+Math.round(ratio*100)+"% of your calorie goal by "+fmtClock(hr*60)+" — an under-fueled afternoon feels heavier than a fed one."); }
+        }
+      }
+      var score = Math.max(0, Math.min(100, Math.round(pts)));
+      var level = score<=19?1:score<=39?2:score<=59?3:score<=79?4:5;
+      return {score:score, level:level, label:["","Fresh","Steady","Fading","Heavy","Drained"][level], why:why};
+    }
+    function bloatScore(ds){
+      ds = ds || todayStr();
+      var mm = mealMacros(ds), d = S.days[ds] || {waterOz:0};
+      var sodium=0, fiber=0, sugars=0, pot=0, big=0, bigFat=0, logged=false;
+      MEALS.forEach(function(m){ var x=mm[m]; sodium+=x.sodium; fiber+=x.fiber; sugars+=x.sugars; pot+=x.pot;
+        big=Math.max(big,x.cal); bigFat=Math.max(bigFat,x.f); if(x.cal>0) logged=true; });
+      if (!logged) return {score:null, why:[], label:"–"};
+      var pts = 0, why = [];
+      if (sodium>=3500){ pts+=30; why.push(Math.round(sodium).toLocaleString()+"mg sodium — high salt drives water retention and bloating (high-sodium diets raised bloating risk 27%: Peng et al. 2019)."); }
+      else if (sodium>=2300){ pts+=16; why.push(Math.round(sodium).toLocaleString()+"mg sodium is over the 2,300mg daily value — expect some water retention."); }
+      else if (sodium>=1500){ pts+=7; why.push("Sodium is climbing ("+Math.round(sodium).toLocaleString()+"mg) — watch it if the next meal is salty."); }
+      if (pot>=3500 && sodium>=2300){ pts-=8; why.push("Good potassium ("+Math.round(pot).toLocaleString()+"mg) helps flush sodium — blunting the bloat."); }
+      var fsum=0, fn=0, i, dd, f, m, e, x, u;
+      for (i=1;i<=7;i++){
+        dd = S.days[addDays(todayStr(),-i)]; if(!dd) continue;
+        f=0;
+        for (m=0;m<MEALS.length;m++) (((dd.meals||{})[MEALS[m]])||[]).forEach(function(en){
+          (en.nutrs||[]).forEach(function(nx){
+            if (canonNutr(nx.n)==="Fiber"){ u=String(nx.u||"").toLowerCase(); f += u==="g"?nx.amt : u==="mg"?nx.amt/1000 : u==="mcg"?nx.amt/1e6 : nx.amt; }
+          });
+        });
+        if (f>0){ fsum+=f; fn++; }
+      }
+      var favg = fn>0 ? fsum/fn : 0;
+      if (favg>=5 && fiber>=20 && fiber>favg*1.5){ pts+=25; why.push("Fiber jumped to "+Math.round(fiber)+"g vs your usual "+Math.round(favg)+"g — gut bacteria ferment the sudden extra fiber into gas."); }
+      else if (fiber>=40){ pts+=12; why.push("Very high-fiber day ("+Math.round(fiber)+"g) — healthy, but gas-producing."); }
+      if (sugars>=75){ pts+=14; why.push(Math.round(sugars)+"g sugar — excess sugar ferments in the gut and adds gas."); }
+      else if (sugars>=50){ pts+=7; why.push(Math.round(sugars)+"g sugar — a mild gas risk."); }
+      if (big>=900 || bigFat>=40){ pts+=14; why.push("Big"+(bigFat>=40?", fatty":"")+" meal ("+Math.round(big).toLocaleString()+" kcal) — fat slows stomach emptying, so the fullness lingers."); }
+      else if (big>=650){ pts+=7; why.push("Hearty meal ("+Math.round(big).toLocaleString()+" kcal) — some fullness expected."); }
+      var w = waterCalc(ds), wr = w.target>0 ? (d.waterOz||0)/(w.target*8) : 1;
+      if (w.target>0 && wr<0.75){ pts+=10; why.push("Behind on water ("+Math.round(wr*100)+"% of target) — when you're dry the body holds onto water, adding to the puff."); }
+      var alc = alcData(d).std;
+      if (alc>0){ pts+=5; why.push("Alcohol irritates the gut lining — a small extra bloat nudge."); }
+      var score = Math.max(0, Math.min(100, Math.round(pts)));
+      return {score:score, why:why, label:score<=25?"Comfortable":score<=50?"Full":score<=75?"Bloated":"Very bloated"};
+    }
+
+    /* ============ panel render (v1 behavior, v2 design) ============ */
+    function paintWheelV2(arcId, numId, frac, color, label){
+      var arc = document.getElementById(arcId), C = 2*Math.PI*36;
+      arc.style.strokeDasharray = C;
+      arc.style.strokeDashoffset = frac===null ? C : C*(1-frac);
+      arc.style.stroke = color;
+      document.getElementById(numId).textContent = label;
+    }
+    function paintScoreWheelV2(){
+      var a = adherenceStats(), t = tiredLevel(), b = bloatScore();
+      var aFrac = a.pct===null ? null : Math.min(a.pct,100)/100;
+      paintWheelV2("adhArc","adhNum", aFrac,
+        a.pct===null ? "rgba(255,255,255,.4)" : a.pct>=80 ? "#2fe3b6" : a.pct>=50 ? "#ffffff" : "#ff8a9d",
+        a.pct===null ? "–" : a.pct+"%");
+      paintWheelV2("fatigueArc","fatigueNum", t.level/5,
+        t.level<=2 ? "#2fe3b6" : t.level===3 ? "#ffffff" : t.level===4 ? "#ffd23d" : "#ff8a9d",
+        String(t.level));
+      var bFrac = b.score===null ? null : b.score/100;
+      paintWheelV2("bloatArc","bloatNum", bFrac,
+        b.score===null ? "rgba(255,255,255,.4)" : b.score<=25 ? "#2fe3b6" : b.score<=50 ? "#ffffff" : b.score<=75 ? "#ffd23d" : "#ff8a9d",
+        b.score===null ? "–" : b.score+"%");
+    }
+    function ringPaintV2(eCal, mCal, tCal){
+      var C1 = 2*Math.PI*56, C2 = 2*Math.PI*46;
+      var mFrac = mCal>0 ? Math.min(eCal/mCal,1) : 0;
+      var maint = document.getElementById("ringMaint");
+      maint.style.strokeDasharray = C1;
+      maint.style.strokeDashoffset = C1*(1-mFrac);
+      var sGoal = tCal-mCal, track = document.getElementById("ringSurpTrack"), surp = document.getElementById("ringSurp");
+      if (mCal>0 && sGoal>0){
+        track.style.display = ""; surp.style.display = "";
+        var sFrac = Math.min(Math.max(eCal-mCal,0)/sGoal, 1);
+        surp.style.strokeDasharray = C2;
+        surp.style.strokeDashoffset = C2*(1-sFrac);
+        surp.style.stroke = eCal>=tCal ? "#2fbf71" : "#ffffff";
+      } else { track.style.display = "none"; surp.style.display = "none"; }
+    }
+    var DOWS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    function renderWeekStrip(){
+      var wrap = document.getElementById('wkDays');
+      wrap.innerHTML = "";
+      var today = new Date(); today.setHours(12,0,0,0);
+      var sun = new Date(today); sun.setDate(today.getDate()-today.getDay()+weekOff*7);
+      var vd = viewDate(), ts = todayStr();
+      for (var i=0;i<7;i++){
+        (function(i){
+          var d = new Date(sun); d.setDate(sun.getDate()+i);
+          var ks = dstr(d);
+          var b = document.createElement("button");
+          b.className = "wk-day"+(ks===vd?" sel":"")+(ks===ts?" today":"");
+          if (ks > ts) b.disabled = true;
+          var dd = S.days[ks];
+          var logged = dd && MEALS.some(function(m){ return ((dd.meals||{})[m]||[]).length; });
+          var dotCls = ks===ts ? "now" : (logged ? "log" : "");
+          b.innerHTML = '<span class="dow">'+DOWS[i]+'</span><span class="dnum">'+d.getDate()+'</span>'+
+            '<span class="dot '+dotCls+'"'+(dotCls?"":' style="opacity:0"')+'></span>';
+          b.addEventListener("click", function(){
+            var dd2 = new Date(d); dd2.setHours(12,0,0,0);
+            dayOffset = Math.round((dd2-today)/864e5);
+            renderPanel();
+          });
+          wrap.appendChild(b);
+        })(i);
+      }
+      document.getElementById('todayRow').style.display = vd===ts ? "none" : "flex";
+      document.getElementById('wkNext').disabled = weekOff >= 0;
+    }
+    function renderPanel(){
+      var k = viewDate(), t = totals(k), g = S.goals||{};
+      var mCal = g.maintenance>0?g.maintenance:0;
+      var tCal = mCal+(g.surplus>0?g.surplus:0);
+      var eCal = t.cal;
+      var dt = new Date(k+"T12:00:00");
+      document.getElementById('intakeDate').textContent =
+        dt.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
+      document.getElementById('calEaten').textContent = Math.round(eCal).toLocaleString('en-US');
+      var left = tCal-eCal;
+      document.getElementById('flagKcal').textContent =
+        left>=0 ? Math.round(left).toLocaleString('en-US')+" kcal" : Math.round(-left).toLocaleString('en-US')+" over";
+      var fsur = document.getElementById('flagSur');
+      if (eCal > mCal){ fsur.textContent = "+"+Math.round(eCal-mCal).toLocaleString('en-US')+" SUR"; fsur.classList.add("on"); }
+      else { fsur.textContent = Math.round(mCal-eCal).toLocaleString('en-US')+" to SUR"; fsur.classList.remove("on"); }
+      document.getElementById('progPct').textContent = (tCal>0 ? Math.round(eCal/tCal*100) : 0)+"%";
+      ringPaintV2(eCal, mCal, tCal);
+      var st = statusInfo(), fill = document.getElementById('spFill');
+      fill.style.width = (st.tCal>0 ? Math.min(st.eCal/st.tCal,1)*100 : 0)+"%";
+      fill.style.background = st.grad;
+      document.getElementById('spMark').style.left = "calc("+(st.tCal>0 ? st.mCal/st.tCal*100 : 0)+"% - 1px)";
+      paintScoreWheelV2();
+      renderWeekStrip();
+    }
+    document.getElementById('wkPrev').addEventListener('click', function(){ weekOff--; renderPanel(); });
+    document.getElementById('wkNext').addEventListener('click', function(){ if (weekOff<0){ weekOff++; renderPanel(); } });
+    document.getElementById('todayPill').addEventListener('click', function(){ dayOffset = 0; weekOff = 0; renderPanel(); });
+
+    /* ---------- bottom sheet: zone + score details ---------- */
+    function openSheet(html){
+      document.getElementById('sheetBody').innerHTML = html;
+      document.getElementById('sheetBack').classList.add('open');
+      document.getElementById('sheet').classList.add('open');
+    }
+    function closeSheet(){
+      document.getElementById('sheetBack').classList.remove('open');
+      document.getElementById('sheet').classList.remove('open');
+    }
+    document.getElementById('sheetBack').addEventListener('click', closeSheet);
+    function zoneSheetHTML(){
+      var g = S.goals||{}, m = g.maintenance>0?g.maintenance:0, tc = m+(g.surplus>0?g.surplus:0);
+      var st = statusInfo();
+      function zrow(color, name, range, html){
+        return '<div class="zonerow"><span class="zdot" style="background:'+color+'"></span><div><b>'+name+
+          ' <span class="zrange">'+range+'</span></b><p>'+html+'</p></div></div>';
+      }
+      return '<div class="zonenow"><b>'+esc(st.title)+'</b><p>'+esc(st.det)+'</p></div>' +
+        zrow("#ff5c5c","Deficit","under "+Math.round(m).toLocaleString('en-US')+" cal",
+          "Below maintenance. A sustained deficit around 500 cal/day can prevent lean mass gains, and undereating brings fatigue, worse sleep and stalled lifts.") +
+        zrow("#ff9f43","Building",Math.round(m).toLocaleString('en-US')+" – "+Math.round(tc).toLocaleString('en-US')+" cal",
+          "Past maintenance. You're in surplus territory — close the gap to hit your full gaining target.") +
+        zrow("#2fbf71","On track",Math.round(tc).toLocaleString('en-US')+"+ cal",
+          "Daily target hit: maintenance covered plus your full surplus, for growth.") +
+        '<div class="zonefoot">Zones come from your goals: '+Math.round(m).toLocaleString('en-US')+' maintenance + '+
+          Math.round(g.surplus>0?g.surplus:0).toLocaleString('en-US')+' surplus.</div>';
+    }
+    function scoreSheetHTML(){
+      var a = adherenceStats(), t = tiredLevel(), b = bloatScore();
+      var html = a.pct===null
+        ? '<div class="irow"><b>Adherence:</b> no logged days in the last 2 weeks yet — log meals and this fills in.</div>'
+        : '<div class="irow"><b>Adherence: '+a.pct+'%</b> — '+a.hit+' of '+a.n+' logged days (last 14) hit calories within ±10% of goal and protein ≥90%.</div>';
+      html += '<div class="irow"><b>Fatigue: '+t.level+'/5 — '+t.label+'.</b> An estimate from what you consumed: last night\'s drinks (dose-weighted), drinks today, a carb-dominant or oversized recent meal, a sugary meal\'s crash, water well under target late in the day, and running far under your calorie goal. No sleep tracking, no body-clock — missing data never makes it worse.</div>';
+      html += t.why.map(function(w){ return '<div class="irow">• '+esc(w)+'</div>'; }).join("");
+      html += '<div class="irow"><b>Bloat: '+(b.score===null?"–":b.score+"/100 — "+b.label)+'.</b> Predicted from today\'s sodium, fiber, sugar, meal size, water, and alcohol.</div>';
+      html += b.why.map(function(w){ return '<div class="irow">• '+esc(w)+'</div>'; }).join("");
+      return html;
+    }
+    document.getElementById('zoneInfo').addEventListener('click', function(){ openSheet(zoneSheetHTML()); });
+    ["fatigueWheel","bloatWheel","adhWheel"].forEach(function(id){
+      document.getElementById(id).addEventListener('click', function(){ openSheet(scoreSheetHTML()); });
+    });
+
+    /* ---------- nutrition analysis view ---------- */
+    function renderAnalysis(){
+      var k = viewDate(), g = S.goals||{}, t = totals(k), mc = mealCals(k);
+      var dt = new Date(k+"T12:00:00");
+      document.getElementById('anaTitle').textContent =
+        k===todayStr() ? "Today" : (dt.getMonth()+1)+"/"+dt.getDate()+"/"+String(dt.getFullYear()).slice(2);
+      var mCal = g.maintenance>0?g.maintenance:0, tCal = mCal+(g.surplus>0?g.surplus:0);
+      document.getElementById('aCal').textContent = Math.round(t.cal).toLocaleString('en-US');
+      document.getElementById('aGoal').textContent = "of "+Math.round(tCal).toLocaleString('en-US')+" goal";
+      var C = 2*Math.PI*54, acc = 0, segHtml = "";
+      MEALS.forEach(function(m){
+        var frac = tCal>0 ? mc[m]/tCal : 0;
+        if (frac > 0.004){
+          segHtml += '<circle cx="64" cy="64" r="54" fill="none" stroke="'+MEAL_SEG[m]+'" stroke-width="13"'+
+            ' stroke-dasharray="'+(C*frac).toFixed(2)+' '+C.toFixed(2)+'" stroke-dashoffset="'+(-C*acc).toFixed(2)+'" stroke-linecap="butt"/>';
+        }
+        acc += frac;
+      });
+      document.getElementById('aSeg').innerHTML = segHtml;
+      var tot = t.cal;
+      document.getElementById('aMealTable').innerHTML = FOOD_MEALS.map(function(m){
+        var pct = tot>0 ? Math.round(mc[m]/tot*100) : 0;
+        return '<tr><td><span class="mdot" style="background:'+MEAL_SEG[m]+'"></span>'+MEAL_LABEL[m]+'</td><td>'+
+          Math.round(mc[m]).toLocaleString('en-US')+' kcal</td><td>'+pct+'%</td></tr>';
+      }).join("");
+      document.getElementById('aNote').innerHTML = tot>0
+        ? '<b>'+Math.round(tCal-tot).toLocaleString('en-US')+' kcal</b> to your daily target of '+Math.round(tCal).toLocaleString('en-US')+'.<br>Protein '+r1(t.p)+'g of '+(g.protein||0)+'g.'
+        : 'Nothing logged yet.';
+      var fib = dayTotals(k).fiber, fibT = fiberTarget();
+      var rows = [
+        ["Carbs", r1(t.c)+"g", g.carbs||0, barW(t.c, g.carbs||0)],
+        ["Protein", r1(t.p)+"g", g.protein||0, barW(t.p, g.protein||0)],
+        ["Fat", r1(t.f)+"g", g.fat||0, barW(t.f, g.fat||0)],
+        ["Fiber", r1(fib)+"g", fibT, barW(fib, fibT)]
+      ];
+      document.getElementById('aMacros').innerHTML = rows.map(function(r){
+        return '<div class="amac"><div class="amac-top"><span>'+r[0]+'</span><span>'+r[1]+' <i>of '+r[2]+'g</i></span></div>'+
+          '<div class="amac-bar"><i style="width:'+r[3]+'"></i></div></div>';
+      }).join("");
+    }
+    document.getElementById('analysisLink').addEventListener('click', function(){ renderAnalysis(); show('view-analysis'); });
+    document.getElementById('analysisBack').addEventListener('click', function(){ show('view-home'); });
+
     /* ---------- home content ---------- */
     document.getElementById('hdrDate').textContent =
       now.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
-    document.getElementById('intakeDate').textContent =
-      now.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
-
-    var eaten = 0; // no data yet
-    document.getElementById('eatenVal').textContent = eaten.toLocaleString('en-US');
-    document.getElementById('remainVal').textContent =
-      (GOAL - eaten).toLocaleString('en-US') + ' kcal';
-    document.getElementById('goalLine').textContent = '0% of daily goal';
-    document.getElementById('goalFill').style.width = '0%';
-
-    var DOWS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    var weekOffset = 0;
-    function renderWeek(){
-      var base = new Date(now);
-      base.setDate(now.getDate() - now.getDay() + weekOffset * 7);
-      var html = '';
-      for (var i = 0; i < 7; i++){
-        var dt = new Date(base);
-        dt.setDate(base.getDate() + i);
-        var isT = dt.toDateString() === now.toDateString();
-        html += '<div class="wk-day' + (isT ? ' today' : '') + '">' +
-          '<span class="dow">' + DOWS[i] + '</span>' +
-          '<span class="dnum">' + dt.getDate() + '</span>' +
-          '<span class="dot"></span></div>';
-      }
-      document.getElementById('wkDays').innerHTML = html;
-    }
-    document.getElementById('wkPrev').addEventListener('click', function(){ weekOffset--; renderWeek(); });
-    document.getElementById('wkNext').addEventListener('click', function(){ weekOffset++; renderWeek(); });
-    renderWeek();
+    renderPanel();
 
     var h = document.querySelector('.fuel-header');
     var sc = document.getElementById('scroller');
