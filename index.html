@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- Fuel v2 · 2026.10.04-j · intake panel matched to v1 proportions (bigger text, right-sized rings) -->
+<!-- Fuel v2 · 2026.10.05-a · custom theme color picker (darker teal or anything) -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#edf0f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -271,6 +271,10 @@
   }
   .sw-check svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
   .swatch.sel .sw-check{display:flex}
+  .swatch.custom{grid-column:span 2}
+  .custom-preview{position:relative;overflow:hidden}
+  #customColor{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+  .sw-hex{font-size:13px;font-weight:700;color:var(--text-dim);letter-spacing:.5px}
 </style>
 </head>
 <body>
@@ -447,8 +451,15 @@
       orange:{name:'Orange',bg1:'#fdeadd', bg2:'#f8dbc6', ring:'#dd7a28', ink:'#3c2413', inkDim:'#6b4f38', inkFaint:'#8f7358', accent:'#dd7a28'},
       rose:  {name:'Rose',  bg1:'#fbe3ec', bg2:'#f5cddf', ring:'#d64f7e', ink:'#3c1a28', inkDim:'#6b4453', inkFaint:'#8f6d79', accent:'#d64f7e'}
     };
-    function applyTheme(id){
-      var t = THEMES[id] || THEMES.teal;
+    function hx(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+    function mix(h1,h2,amt){
+      var a=hx(h1),b=hx(h2);
+      return '#'+a.map(function(v,i){
+        var n=Math.round(v+(b[i]-v)*amt).toString(16);
+        return n.length<2?'0'+n:n;
+      }).join('');
+    }
+    function setVars(t){
       var r = document.documentElement.style;
       r.setProperty('--teal', t.ring);
       r.setProperty('--ink', t.ink);
@@ -457,11 +468,45 @@
       r.setProperty('--accent', t.accent);
       r.setProperty('--intake-bg1', t.bg1);
       r.setProperty('--intake-bg2', t.bg2);
-      try{ localStorage.setItem('fuel2_theme', id); }catch(e){}
+    }
+    function markSelected(id){
       var sws = document.querySelectorAll('.swatch');
       for (var i = 0; i < sws.length; i++){
         sws[i].classList.toggle('sel', sws[i].getAttribute('data-theme') === id);
       }
+    }
+    function save(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+    function applyTheme(id){
+      var t = THEMES[id] || THEMES.teal;
+      setVars(t);
+      save('fuel2_theme', id);
+      markSelected(id);
+    }
+    function buildCustom(hex){
+      return {name:'Custom',
+        bg1:mix(hex,'#ffffff',.84), bg2:mix(hex,'#ffffff',.70),
+        ring:hex, accent:hex,
+        ink:mix(hex,'#000000',.70), inkDim:mix(hex,'#000000',.42), inkFaint:mix(hex,'#000000',.25)};
+    }
+    function paintCustom(hex){
+      hex = (hex || '#0a5f77').toLowerCase();
+      var t = buildCustom(hex);
+      var cb = document.querySelector('.swatch.custom');
+      if (cb) cb.style.setProperty('--sw-ring', hex);
+      var prev = document.getElementById('customPreview');
+      if (prev) prev.style.background = 'linear-gradient(135deg,' + t.bg1 + ',' + t.bg2 + ')';
+      var hexEl = document.getElementById('customHex');
+      if (hexEl) hexEl.textContent = hex.toUpperCase();
+      var inp = document.getElementById('customColor');
+      if (inp && inp.value.toLowerCase() !== hex) inp.value = hex;
+    }
+    function applyCustom(hex){
+      hex = (hex || '#0a5f77').toLowerCase();
+      setVars(buildCustom(hex));
+      save('fuel2_theme', 'custom');
+      save('fuel2_custom', hex);
+      paintCustom(hex);
+      markSelected('custom');
     }
     var swWrap = document.getElementById('swatches');
     Object.keys(THEMES).forEach(function(id){
@@ -478,9 +523,27 @@
       b.addEventListener('click', function(){ applyTheme(id); });
       swWrap.appendChild(b);
     });
-    var savedTheme = null;
-    try{ savedTheme = localStorage.getItem('fuel2_theme'); }catch(e){}
-    applyTheme(savedTheme || 'teal');
+    var savedTheme = null, savedCustom = null;
+    try{ savedTheme = localStorage.getItem('fuel2_theme'); savedCustom = localStorage.getItem('fuel2_custom'); }catch(e){}
+    // custom swatch (wide row under the presets)
+    var cb = document.createElement('button');
+    cb.className = 'swatch custom';
+    cb.setAttribute('data-theme', 'custom');
+    cb.innerHTML =
+      '<span class="sw-preview custom-preview" id="customPreview">' +
+        '<span class="sw-ring" id="customRing"></span>' +
+        '<input type="color" id="customColor" value="#0a5f77" aria-label="Pick a custom color"></span>' +
+      '<span class="sw-foot"><span class="sw-name">Custom</span>' +
+      '<span class="sw-hex" id="customHex">#0A5F77</span></span>';
+    cb.addEventListener('click', function(e){
+      if (e.target && e.target.id === 'customColor') return; // picker handles it
+      applyCustom(document.getElementById('customColor').value);
+    });
+    swWrap.appendChild(cb);
+    document.getElementById('customColor').addEventListener('input', function(e){ applyCustom(e.target.value); });
+    paintCustom(savedCustom || '#0a5f77');
+    if (savedTheme === 'custom' && savedCustom){ applyCustom(savedCustom); }
+    else { applyTheme(savedTheme || 'teal'); }
 
     /* ---------- navigation ---------- */
     function show(id){
