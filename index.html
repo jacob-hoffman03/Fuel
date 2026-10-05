@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- Fuel v2 · 2026.10.04-c · light mode · header + Health status panel · header clears status-bar blur -->
+<!-- Fuel v2 · 2026.10.04-d · light mode · header + Health status panel · sticky frosted header · left pill shell -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#edf0f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -30,12 +30,36 @@
     min-height:100dvh;
   }
   header.fuel-header{
+    position:sticky;
+    top:0;
+    z-index:50;
     display:grid;
     grid-template-columns:1fr auto 1fr;
     align-items:center;
     padding:calc(env(safe-area-inset-top, 0px) + 36px) 20px 18px;
+    transition:background .25s ease;
   }
-  .fuel-header .slot-left{min-width:44px}
+  header.fuel-header.scrolled{
+    background:rgba(237,240,245,.72);
+    -webkit-backdrop-filter:blur(18px) saturate(1.5);
+    backdrop-filter:blur(18px) saturate(1.5);
+  }
+  .fuel-header .slot-left{display:flex;justify-content:flex-start;min-width:44px}
+  .stat-pill{
+    display:inline-flex;align-items:center;gap:8px;
+    background:#ffffff;
+    border:1px solid rgba(20,30,45,.08);
+    box-shadow:0 1px 4px rgba(20,30,45,.08);
+    border-radius:999px;
+    padding:10px 16px;
+    font-size:17px;
+    font-weight:600;
+    color:var(--text);
+    white-space:nowrap;
+  }
+  .stat-pill svg{width:22px;height:22px;stroke:var(--text);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .stat-pill .badge{fill:#fff}
+  .stat-pill .ph{color:var(--text-dim)}
   .fuel-header .slot-date{
     text-align:center;
     font-size:17px;
@@ -98,7 +122,16 @@
 </head>
 <body>
   <header class="fuel-header">
-    <div class="slot-left"></div>
+    <div class="slot-left">
+      <span class="stat-pill" aria-label="Status">
+        <svg viewBox="0 0 24 24">
+          <rect x="6" y="2.5" width="10.5" height="19" rx="2.5"/>
+          <rect class="badge" x="13.5" y="15.5" width="7" height="4.4" rx="1.2"/>
+          <path d="M21.2 16.9v1.6"/>
+        </svg>
+        <span class="ph">—</span>
+      </span>
+    </div>
     <div class="slot-date" id="hdrDate"></div>
     <div class="slot-right">
       <div class="avatar" aria-label="Profile">
@@ -124,6 +157,10 @@
     var d = new Date();
     var s = d.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
     document.getElementById('hdrDate').textContent = s;
+    var h = document.querySelector('.fuel-header');
+    function onScroll(){ h.classList.toggle('scrolled', window.scrollY > 2); }
+    window.addEventListener('scroll', onScroll, {passive:true});
+    onScroll();
   })();
 </script>
 </body>
