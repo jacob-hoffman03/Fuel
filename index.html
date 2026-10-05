@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- Fuel v2 · 2026.10.04-d · light mode · header + Health status panel · sticky frosted header · left pill shell -->
+<!-- Fuel v2 · 2026.10.04-e · light mode · header + Health status panel · sticky frosted header · left pill shell · no pull-to-refresh -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#edf0f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,7 +20,7 @@
     --pill:#ffffff;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
+  html,body{height:100%;overscroll-behavior-y:none}
   body{
     background:var(--bg);
     color:var(--text);
@@ -161,6 +161,14 @@
     function onScroll(){ h.classList.toggle('scrolled', window.scrollY > 2); }
     window.addEventListener('scroll', onScroll, {passive:true});
     onScroll();
+    // Kill pull-to-refresh: at the very top, a downward drag belongs to the page, not the browser.
+    var touchStartY = 0;
+    document.addEventListener('touchstart', function(e){
+      touchStartY = e.touches[0].clientY;
+    }, {passive:true});
+    document.addEventListener('touchmove', function(e){
+      if (window.scrollY <= 0 && e.touches[0].clientY > touchStartY) e.preventDefault();
+    }, {passive:false});
   })();
 </script>
 </body>
